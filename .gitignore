@@ -1,0 +1,12 @@
+backend/
+frontend/
+docs/
+scripts/
+tests/
+.env.example
+.env
+.gitignore
+docker-compose.yml
+Dockerfile.backend
+Dockerfile.frontend
+README.md
