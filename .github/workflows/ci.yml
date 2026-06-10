@@ -1,0 +1,62 @@
+language: rust
+rust-version: ">=1.82"
+compiler:
+  rust-1.83.0-slim-bookworm
+python_version: "3.11"
+node_js: "20"
+package_manager: npm@10.8.3
+
+env:
+  - SEARCH_HELIX__SERVER__HOST=0.0.0.0
+  - SEARCH_HELIX__SERVER__PORT=8080
+  - SEARCH_HELIX__DATABASE__PATH=/data/index
+  - SEARCH_HELIX__OTEL__ENABLED=true
+  - SEARCH_HELIX__OTEL__SERVICE=search-helix
+  - NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
+
+stages:
+  - lint
+  - test
+  - build
+  - deploy
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with: { toolchain: stable }
+      - run: cargo fmt -- --check
+      - run: cargo clippy -- -D warnings
+      - run: npm ci
+      - run: npm run lint
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with: { toolchain: stable }
+      - run: cargo test --all-features
+      - run: npm ci
+      - run: npm run test
+
+  build:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with: { toolchain: stable }
+      - run: cargo build --release
+      - run: npm ci
+      - run: npm run build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Déploiement automatisé déclenché"
